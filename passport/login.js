@@ -4,23 +4,27 @@ var bCrypt = require('bcrypt-nodejs')
 
 module.exports = (passport) => {
   passport.use(
-    'local',
+    'login',
     new LocalStrategy({
       passReqToCallback: true
     },
     (req, username, password, done) => {
-      User.findOne({ 'username': username}), (err, user) => {
+      console.log(username)
+      User.findOne({ 'username': username }, (err, user) => {
+        console.log(user)
         if (err) {
           return done(err)
         }
+
         if (!user) {
           return done(null, false, req.flash('message', 'User not found'))
         }
-        if (!isValidPassword) {
+
+        if (!isValidPassword(user, password)) {
           return done(null, false, req.flash('message', 'Invalid password'))
         }
         return done(null, user)
-      }
+      })
     }
   ))
 
