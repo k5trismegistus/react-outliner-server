@@ -1,35 +1,34 @@
-var LocalStrategy = require('passport-local').Strategy
+var GoogleStrategy = require('passport-google-oauth2').Strategy
 var User = require('../models/user')
 var bCrypt = require('bcrypt-nodejs')
+require('dotenv').config()
 
 module.exports = (passport) => {
+
   passport.use(
-    'login',
-    new LocalStrategy({
-      passReqToCallback: true
+    new GoogleStrategy({
+      clientID: process.env.GOOGLE_OAUTH_CLIENT,
+      clientSecret: process.env.GOOGLE_OAUTH_SECRET,
+      callbackURL: process.env.GOOGLE_OAUTH_CALLBACK
     },
-    (req, username, password, done) => {
-      console.log(username)
-      User.findOne({ 'username': username }, (err, user) => {
-        console.log(user)
-        if (err) {
-          return done(err)
-        }
-
-        if (!user) {
-          return done(null, false, req.flash('message', 'User not found'))
-        }
-
-        if (!isValidPassword(user, password)) {
-          return done(null, false, req.flash('message', 'Invalid password'))
-        }
-        return done(null, user)
+    (accessToken, refreshToken, profile, done) => {
+      process.nextTick(() => {
+        var uid = profile.id
+        var displayName = profile.displayName
+        var avatar = profile._json.image.url
+        User.findOneAndUpdate(
+          { uid: uid },
+          { $set: {
+            uid: uid,
+            displayName: displayName,
+            avatar: avatar
+          } },
+          { upsert: true },
+          (err, user) => {
+            return done(null, uid)
+          }
+         )
       })
     }
   ))
-
-  var isValidPassword = (user, password) => {
-    return bCrypt.compareSync(password, user.password)
-  }
-
 }

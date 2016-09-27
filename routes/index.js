@@ -1,4 +1,5 @@
 var express = require('express')
+var passport = require('passport')
 var router = express.Router()
 
 var isAuthenticated = (req, res, next) => {
@@ -13,23 +14,14 @@ module.exports = (passport) => {
     res.render('index', { message: req.flash('message') })
   })
 
-  router.post('/login', passport.authenticate('login',
-    {
-      successRedirect: '/home',
-      failureRedirect: '/',
-      failureFlash: true
+  router.get('/auth/google', passport.authenticate('google',{
+      scope: ['profile']
     }
   ))
 
-  router.get('/signup', (req, res) => {
-    res.render('register', { message: req.flash('message') })
-  })
-
-  router.post('/signup', passport.authenticate('signup',
-    {
+  router.get('/auth/google/callback', passport.authenticate('google', {
       successRedirect: '/home',
-      failureRedirect: '/signup',
-      failureFlash: true
+      failureRedirect: '/'
     }
   ))
 
